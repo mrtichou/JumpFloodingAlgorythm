@@ -7,11 +7,11 @@ Created on Sat Nov 13 10:57:37 2021
 import sys
 import os
 
-from numpy import arange, zeros, ones, full
-from numpy import stack, vstack, tile, concatenate
-from numpy import shape, take, meshgrid, diff
-from numpy import ceil, log2, isinf
-from numpy import inf, pi
+from numpy import (array, arange, zeros, ones, full,
+                   stack, vstack, tile, concatenate,
+                   shape, take, meshgrid, diff,
+                   ceil, log2, isinf, dot,
+                   inf, pi)
 
 ## Helper functions
 def init_maps(dimensions):
@@ -105,8 +105,22 @@ def borders(bwimg):
     lines = vstack((h_lines,v_lines)).T
     return lines
 
-def add_root_to_path():
-    dirname = os.path.dirname(os.path.realpath(__file__))
-    root_dirname = os.path.realpath(os.path.join(dirname,'..'))
-    if not(root_dirname in sys.path):
-        sys.path.append(root_dirname)
+def col_to_gray(image):
+    """Convert RGB or RGBA image to grayscale."""
+    if len(image.shape) == 3 and image.shape[3] > 1:
+        RGB_WEIGHTS = [0.2989, 0.5870, 0.1140] # Rec. 601 Color Transform
+        grayscale_image = dot(image[...,:3], RGB_WEIGHTS)
+        return grayscale_image
+    else: 
+        return image
+
+def image_to_boolean(input_image):    
+    """Convert RGB or RGBA image to grayscale."""
+    arr = col_to_gray(array(input_image.convert('L')))
+    return (arr - arr.min()) / (arr.max() - arr.min()) > 0.5
+
+# def add_root_to_path():
+#     dirname = os.path.dirname(os.path.realpath(__file__))
+#     root_dirname = os.path.realpath(os.path.join(dirname,'..'))
+#     if not(root_dirname in sys.path):
+#         sys.path.append(root_dirname)

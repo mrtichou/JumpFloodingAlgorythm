@@ -4,9 +4,20 @@ Created on Sat Nov 13 10:50:55 2021
 
 @author: marti
 """
-import addroottopath
-from jumpflood.helpers import init_maps, step_sequence, \
-    spread, inf_mask, borders, voronoi
+if __name__ == '__main__':
+    import os, sys
+    depth = 1
+    root_folder = os.path.realpath(os.path.join(__file__,'../' * (1+depth)))
+    os.chdir(root_folder)
+    sys.path.append(root_folder)
+    
+from jumpflood.helpers import (init_maps, 
+                               step_sequence, 
+                               spread, 
+                               inf_mask, 
+                               borders, 
+                               voronoi,
+                               image_to_boolean)
 
 class JumpFlood:
     def __init__(self,dimensions,seeds_ancestor,metric):
@@ -98,19 +109,24 @@ class JumpFlood:
 
 
 class SignedJumpFlood(JumpFlood):
-    def __init__(self, bool_image, metric,**kwargs):
-        self.bool_image = bool_image
-        super().__init__(bool_image.shape,borders(bool_image),metric,**kwargs)
+    def __init__(self, bool_array, metric):
+        self.bool_array = bool_array
+        super().__init__(bool_array.shape,borders(bool_array),metric)
+    
+    @classmethod
+    def from_image(cls, input_image, metric):
+        """Instanciate SignedJumpFlood from PIL bw image."""
+        bool_array = image_to_boolean(input_image)
+        return cls(bool_array, metric)
     
     @property
     def signed_distance_field(self):
-        sign = (1 - 2 * self.bool_image)
+        sign = (1 - 2 * self.bool_array)
         return sign * self.distance_field
 
 
 
-
-def _test(input_path= './test/water.jpg', metric_name= 'r',variant= '1+JFA', verbose= True):
+def _test(input_path= './jumpflood/test/water.jpg', metric_name= 'r',variant= '1+JFA', verbose= True):
     from numpy import array, nanmax, nanmin, tanh, save
     from PIL import Image
     from tools.metricpresets import metric_from_preset
@@ -122,15 +138,11 @@ def _test(input_path= './test/water.jpg', metric_name= 'r',variant= '1+JFA', ver
     # load input image as PIL Image
     input_image = Image.open(input_path)
     
-    # convert input to boolean image using a simple threshold
-    bool_image = array(input_image.convert('L'))/255 < 0.5
-    
     ## Setup available metrics
-    
     metric = metric_from_preset(metric_name, bool_image)
     
     ## Setup initial state
-    jf = SignedJumpFlood(bool_image,metric)
+    jf = SignedJumpFlood.from_image(input_image, metric)
     jf.flood(variant = variant, verbose = verbose)
     
     ## Plotting
@@ -156,9 +168,12 @@ def _test(input_path= './test/water.jpg', metric_name= 'r',variant= '1+JFA', ver
     plt.imshow(jf.voronoi_diagram,extent=[-180,180,-90,90],cmap='hsv',
                interpolation = 'nearest')
     
-    save('./test/signed.npy',jf.signed_distance_field)
-    save('./test/voronoi.npy',jf.voronoi_diagram)
+    save('./jumpflood/test/signed_tst.npy',jf.signed_distance_field)
+    save('./jumpflood/test/voronoi_tst.npy',jf.voronoi_diagram)
 
 if __name__ == '__main__':
-    _test('./test/earthspec2k.jpg')
-    
+    _test('./jumpflood/test/water.jpg')
+
+
+if __name__ == '__main__':
+    sys.path.remove(root_folder)

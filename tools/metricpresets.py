@@ -29,7 +29,7 @@ def find_preset(metric_name):
 def metric_from_preset(metric_name, image=None, dimensions=None):
     _, preset = find_preset(metric_name)
     if dimensions == None:
-        dimensions = image.shape
+        dimensions = image.shape[:2]
     metric_class = preset[CLASS]
     default_args = preset[DEFARGS]
     all_arguments = {**default_args,'dimensions':dimensions}
